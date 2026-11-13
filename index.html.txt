@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>House Builder — Fantasy Politics GM</title>
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+    }
+    .tab-active {
+      background: #1d4ed8;
+      color: #ffffff;
+      border-color: #3b82f6;
+      box-shadow: 0 4px 14px -2px rgba(29, 78, 216, 0.45);
+    }
+    /* Custom subtle scrollbar for candidate pool */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-3 sm:p-6 md:p-8 antialiased selection:bg-blue-600 selection:text-white">
+  <div class="max-w-6xl mx-auto space-y-5">
+
+    <!-- INLINE NOTIFICATION BANNER (Replaces alert() cleanly) -->
+    <div id="toastBanner" class="hidden fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-amber-500/50 bg-slate-900/95 px-4 py-3 shadow-2xl backdrop-blur transition-all duration-300">
+      <div class="flex items-start gap-3">
+        <span id="toastIcon" class="text-amber-400 font-bold text-base mt-0.5">!</span>
+        <div class="flex-1">
+          <div id="toastTitle" class="text-xs font-bold uppercase tracking-wider text-amber-300">Cap Alert</div>
+          <p id="toastMessage" class="text-xs text-slate-200 mt-0.5"></p>
+        </div>
+        <button onclick="hideToast()" class="text-slate-400 hover:text-white text-sm font-bold px-1">&times;</button>
+      </div>
+    </div>
+
+    <!-- HEADER WITH CUSTOM NAVY BLUE + WHITE CAPITOL + DIAGONAL RED HAMMER LOGO -->
+    <header class="card p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+      <div class="flex items-center gap-4 w-full md:w-auto">
+        <!-- Custom App Icon SVG matching the first logo (hammer head top-right, handle bottom-left) -->
+        <svg width="64" height="64" viewBox="0 0 100 100" class="rounded-2xl shadow-lg shrink-0" xmlns="http://www.w3.org/2000/svg" aria-label="House Builder Logo">
+          <defs>
+            <linearGradient id="navyBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0f295c"/>
+              <stop offset="100%" stop-color="#06132b"/>
+            </linearGradient>
+          </defs>
+          <!-- Deep Navy Rounded Square -->
+          <rect width="100" height="100" rx="22" fill="url(#navyBg)" stroke="#2563eb" stroke-width="1.5"/>
+          <!-- Crisp White Capitol Silhouette -->
+          <g fill="#ffffff">
+            <!-- Statue & Finial -->
+            <rect x="48.5" y="10" width="3" height="7" rx="1"/>
+            <rect x="46" y="17" width="8" height="4" rx="1"/>
+            <!-- Main Dome -->
+            <path d="M33 37 C33 22, 67 22, 67 37 Z"/>
+            <rect x="30" y="37" width="40" height="4.5" rx="1"/>
+            <!-- Drum & Windows -->
+            <rect x="33" y="41.5" width="34" height="9"/>
+            <rect x="37" y="43.5" width="2.5" height="5" fill="#0b2047"/>
+            <rect x="43" y="43.5" width="2.5" height="5" fill="#0b2047"/>
+            <rect x="48.75" y="43.5" width="2.5" height="5" fill="#0b2047"/>
+            <rect x="54.5" y="43.5" width="2.5" height="5" fill="#0b2047"/>
+            <rect x="60.5" y="43.5" width="2.5" height="5" fill="#0b2047"/>
+            <!-- Portico Pediment & Wings -->
+            <rect x="17" y="51" width="66" height="4.5" rx="1"/>
+            <polygon points="36,55.5 50,49 64,55.5" fill="#ffffff" stroke="#0b2047" stroke-width="1"/>
+            <rect x="20" y="55.5" width="60" height="22.5"/>
+            <!-- Columns -->
+            <rect x="25" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <rect x="33" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <rect x="41" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <rect x="48.25" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <rect x="55.5" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <rect x="63.5" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <rect x="71.5" y="58" width="3.5" height="18" fill="#0b2047"/>
+            <!-- Base Steps -->
+            <rect x="15" y="78" width="70" height="5.5" rx="1.5"/>
+          </g>
+          <!-- Diagonal Red Claw Hammer (Head top-right, Handle extending bottom-left) -->
+          <g transform="translate(65, 58) rotate(42)">
+            <!-- Handle -->
+            <rect x="-4.5" y="-6" width="9" height="42" rx="3.5" fill="#dc2626" stroke="#06132b" stroke-width="1.5"/>
+            <!-- Grip Accent -->
+            <rect x="-5.5" y="10" width="11" height="25" rx="3.5" fill="#b91c1c" stroke="#06132b" stroke-width="1.5"/>
+            <!-- Hammer Striking Face & Curved Claw -->
+            <path d="M-13 -14 L10 -14 L10 -5 L-6 -5 C-11 -5 -15 -2 -18 3 C-19 -4 -17 -10 -13 -14 Z" fill="#dc2626" stroke="#06132b" stroke-width="1.5"/>
+          </g>
+        </svg>
+
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">HOUSE BUILDER</h1>
+            <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-red-600 text-white">Fantasy Politics GM</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">Draft an 8-slot U.S. administration under a $100M cap. Graded on verified official records &amp; kitchen-table impact.</p>
+        </div>
+      </div>
+
+      <!-- Live Cap & Consensus Counters -->
+      <div class="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto bg-slate-950/90 px-4 py-3 rounded-xl border border-slate-800">
+        <div>
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Cap Left</div>
+          <div id="capDisplay" class="text-xl font-extrabold text-emerald-400">$100M</div>
+        </div>
+        <div class="h-8 w-px bg-slate-800"></div>
+        <div>
+          <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">People's Match %</div>
+          <div id="headerMatchDisplay" class="text-xl font-extrabold text-blue-400">0%</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- REAL CAPITOL WEATHER BANNER (LOCKED TO REALITY) -->
+    <div class="card px-4 sm:px-5 py-3.5 border-amber-500/30 bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/25 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold uppercase tracking-wider">Real Capitol Weather</span>
+        <span class="text-slate-300">Locked to Reality: <strong class="text-white">Divided Government (R White House / D-Leaning Chambers)</strong></span>
+      </div>
+      <div class="text-slate-400">
+        Partisan bills face <strong class="text-amber-300">Veto Friction (-30%)</strong> • Bipartisan &amp; Oversight stars earn <strong class="text-emerald-400">+25% Bonus</strong>
+      </div>
+    </div>
+
+    <!-- FOUR INTERACTIVE NAVIGATION TABS -->
+    <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      <button onclick="switchTab('draft')" id="tab-draft" class="tab-active px-4 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition text-left sm:text-center">
+        1. Build Your House
+      </button>
+      <button onclick="switchTab('consensus')" id="tab-consensus" class="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-600 transition text-left sm:text-center">
+        2. Your House vs. The People's House
+      </button>
+      <button onclick="switchTab('kitchen')" id="tab-kitchen" class="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-600 transition text-left sm:text-center">
+        3. Kitchen Table Impact Scoreboard
+      </button>
+      <button onclick="switchTab('reel')" id="tab-reel" class="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-600 transition text-left sm:text-center">
+        4. Weekly Highlight Reel
+      </button>
+    </nav>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: BUILD YOUR HOUSE (8-SLOT ROSTER + FREE AGENT SCOUT POOL)       -->
+    <!-- ===================================================================== -->
+    <section id="view-draft" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 card p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-extrabold text-white">Your 8-Slot Administration</h2>
+            <p class="text-xs text-slate-400">Click any office slot to highlight it, then select an official from the Scout Pool.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="clearAllSlots()" class="text-xs font-semibold px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              Clear All
+            </button>
+            <button onclick="autoFillConsensus()" class="text-xs font-bold px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow transition">
+              Auto-Fill The People's House
+            </button>
+          </div>
+        </div>
+        <div id="slotsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <div class="card p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-extrabold text-white">Free Agent Scout Pool</h2>
+          <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">12 Officials</span>
+        </div>
+        <p class="text-xs text-slate-400">Active Slot: <strong id="activeSlotLabel" class="text-blue-400">President</strong></p>
+        <div id="poolList" class="space-y-2 max-h-[520px] overflow-y-auto pr-1"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: YOUR HOUSE VS. THE PEOPLE'S HOUSE & 2028 JACKPOT               -->
+    <!-- ===================================================================== -->
+    <section id="view-consensus" class="hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Consensus Alignment Card -->
+        <div class="card p-6 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Consensus Alignment</span>
+          <div id="bigAlignmentScore" class="text-5xl font-black text-white">0%</div>
+          <p id="alignmentVerdict" class="text-xs sm:text-sm text-slate-400">Draft your roster to compare your selections with the crowd consensus.</p>
+          <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+            <div id="alignmentBar" class="bg-blue-500 h-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Independent Scout Bonus Card -->
+        <div class="card p-6 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Independent Scout Bonus</span>
+          <div id="contrarianCount" class="text-5xl font-black text-amber-400">0 Picks</div>
+          <p class="text-xs sm:text-sm text-slate-400">Officials drafted by fewer than 25% of players. Verified legislative or oversight milestones earn a <strong class="text-white">1.5x Scout Multiplier</strong>.</p>
+        </div>
+
+        <!-- Dream House vs. Actual House 2028 Jackpot Card -->
+        <div class="card p-6 border-red-500/40 bg-gradient-to-br from-slate-900 to-red-950/30 space-y-3 flex flex-col justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-red-400">Dream House vs. Actual House</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-red-600/30 text-red-300 border border-red-500/40">2028 Jackpot</span>
+            </div>
+            <div class="text-3xl font-black text-white">1 in 4.2M</div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Free-to-play prediction capsule: If all 8 of your drafted officials hold these exact seats after the 2028 election &amp; confirmation cycle, you unlock the <strong class="text-white">2028 Founder's Crown + Lifetime Pro GM + Official Trophy</strong>.
+            </p>
+          </div>
+          <div class="space-y-2 pt-1">
+            <button onclick="lock2028Ballot()" class="w-full py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold uppercase tracking-wider text-white shadow transition">
+              Lock 2028 Dream House Capsule
+            </button>
+            <div id="lockStatus" class="text-xs font-medium hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slot-by-Slot Comparison Table -->
+      <div class="card p-5 overflow-x-auto">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h3 class="text-lg font-extrabold text-white">Slot-by-Slot Comparison: Your House vs. The People's House</h3>
+          <span class="text-xs text-slate-400">Crowd draft shares updated weekly</span>
+        </div>
+        <table class="w-full text-left text-sm min-w-[560px]">
+          <thead class="text-xs uppercase text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="py-2.5 pr-3">Office / Slot</th>
+              <th class="py-2.5 px-3">Your House</th>
+              <th class="py-2.5 px-3">The People's House (#1)</th>
+              <th class="py-2.5 px-3">Draft Share</th>
+              <th class="py-2.5 pl-3">Alignment</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonTable" class="divide-y divide-slate-800/70"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: KITCHEN TABLE IMPACT SCOREBOARD (4 NON-PARTISAN PILLARS)       -->
+    <!-- ===================================================================== -->
+    <section id="view-kitchen" class="hidden space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Measurable Everyday Outcomes</span>
+            <h2 class="text-xl font-extrabold text-white">The 4-Pillar Kitchen Table Scoreboard</h2>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-3xl">
+              Party labels earn zero points. Policies are evaluated on verifiable economic and public-health benchmarks (BLS CPI, Medicare/CMS access, EIA utility rates). Toggle policy scenarios below to simulate how real decisions ripple across all four pillars.
+            </p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-right shrink-0">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Net Kitchen Table Score</div>
+            <div id="netKitchenScore" class="text-2xl font-black text-emerald-400">+9 pts</div>
+          </div>
+        </div>
+
+        <!-- Interactive Policy Scenario Toggles -->
+        <div class="pt-2 border-t border-slate-800">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Simulate Active Policy Scenarios (Toggle to Test Impact):</div>
+          <div id="policyToggles" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
+        </div>
+      </div>
+
+      <!-- 4 Pillars Grid -->
+      <div id="pillarsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: WEEKLY HIGHLIGHT REEL (VERIFIED RECEIPTS VS DEVELOPING BUZZ)   -->
+    <!-- ===================================================================== -->
+    <section id="view-reel" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="card p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-extrabold text-base text-white">Your Drafted Roster</h3>
+          <span class="text-xs text-slate-400">Select to inspect</span>
+        </div>
+        <div id="reelRosterList" class="space-y-2"></div>
+      </div>
+
+      <div class="lg:col-span-2 card p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-xs uppercase font-bold tracking-wider text-red-400">Verified Receipts vs. Developing Buzz</span>
+            <h3 id="reelTitle" class="text-lg sm:text-xl font-extrabold text-white mt-0.5">Select a drafted official to inspect their week</h3>
+          </div>
+          <!-- Network Perspective Switcher -->
+          <div class="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start">
+            <button onclick="setNetwork('CSPAN')" id="net-CSPAN" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition">C-SPAN</button>
+            <button onclick="setNetwork('CNN')" id="net-CNN" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">CNN</button>
+            <button onclick="setNetwork('FOX')" id="net-FOX" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">FOX</button>
+          </div>
+        </div>
+
+        <!-- Simulated Broadcast Screen -->
+        <div class="rounded-xl bg-slate-950 border border-slate-800 p-5 sm:p-6 min-h-[240px] flex flex-col justify-between gap-4">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div id="networkBanner" class="text-xs font-extrabold uppercase tracking-widest text-blue-400">C-SPAN OFFICIAL RECORD</div>
+              <span class="text-[11px] text-slate-500">Unverified buzz = 0 pts until confirmed</span>
+            </div>
+            <p id="broadcastQuote" class="text-sm sm:text-base font-medium text-slate-200 leading-relaxed">
+              Draft at least one official in Tab 1 to view verified Congress.gov roll-call receipts, unverified buzz tags, and plain-English civic lessons.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <div id="eventChips" class="flex flex-wrap gap-2"></div>
+            <!-- Plain-English Civic Cause-and-Effect Lesson Callout -->
+            <div id="civicLessonBox" class="hidden rounded-xl bg-slate-900/90 border border-blue-500/30 p-3.5">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-blue-400 mb-1">Civic Cause-and-Effect Lesson</div>
+              <p id="civicLessonText" class="text-xs text-slate-300 leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // DATA MODELS
+    // =========================================================================
+    const SLOTS = [
+      { id: 'pres', title: 'President', americasPick: 'Josh Shapiro', share: '34%' },
+      { id: 'vp', title: 'Vice President', americasPick: 'Wes Moore', share: '29%' },
+      { id: 'speaker', title: 'Speaker of the House', americasPick: 'Hakeem Jeffries', share: '41%' },
+      { id: 'senate', title: 'Senate Majority Leader', americasPick: 'John Thune', share: '31%' },
+      { id: 'press', title: 'White House Press Sec.', americasPick: 'Alexandria Ocasio-Cortez', share: '48%' },
+      { id: 'def', title: 'Secretary of Defense', americasPick: 'Mark Kelly', share: '36%' },
+      { id: 'ag', title: 'Attorney General', americasPick: 'Letitia James', share: '27%' },
+      { id: 'wild', title: '2x Floor Wildcard', americasPick: 'Thomas Massie', share: '39%' }
+    ];
+
+    const CANDIDATES = [
+      {
+        name: 'Alexandria Ocasio-Cortez',
+        party: 'D',
+        cost: 14,
+        pop: 48,
+        events: [
+          { type: 'verified', label: '[VERIFIED +10 pts] Oversight Committee Hearing' },
+          { type: 'verified', label: '[VERIFIED -5 pts] Partisan Bill Stalled in Committee' },
+          { type: 'verified', label: '[VERIFIED +8 pts] Public Briefing Reach' }
+        ],
+        lesson: 'In a divided Congress, committee oversight hearings still generate verifiable public accountability (+10 pts), even when standalone partisan bills face Veto Friction (-30%) on the floor.'
+      },
+      {
+        name: 'Josh Shapiro',
+        party: 'D',
+        cost: 18,
+        pop: 34,
+        events: [
+          { type: 'verified', label: '[VERIFIED +15 pts] Bipartisan Infrastructure Permitting' },
+          { type: 'verified', label: '[VERIFIED +5 pts] Town Hall Constituent Streak' }
+        ],
+        lesson: 'Bipartisan infrastructure and permitting agreements bypass Veto Friction and earn the +25% Divided Government Synergy bonus because both chambers can pass them.'
+      },
+      {
+        name: 'JD Vance',
+        party: 'R',
+        cost: 17,
+        pop: 32,
+        events: [
+          { type: 'verified', label: '[VERIFIED +10 pts] Senate Procedural Tie-Break' },
+          { type: 'unverified', label: '[UNVERIFIED 0 pts] Intelligence Briefing Leak Report' }
+        ],
+        lesson: 'Under the Verified Receipts Rule, unconfirmed media reports carry 0 pts until an Inspector General or official congressional record confirms the facts.'
+      },
+      {
+        name: 'Thomas Massie',
+        party: 'R',
+        cost: 10,
+        pop: 39,
+        events: [
+          { type: 'verified', label: '[VERIFIED +12 pts] War Powers Floor Vote Forced' },
+          { type: 'verified', label: '[VERIFIED +8 pts] Cross-Aisle Coalition Bonus' }
+        ],
+        lesson: 'Discharge petitions and War Powers resolutions allow rank-and-file lawmakers to force a recorded floor vote even when party leadership prefers to table the issue.'
+      },
+      {
+        name: 'Hakeem Jeffries',
+        party: 'D',
+        cost: 15,
+        pop: 41,
+        events: [
+          { type: 'verified', label: '[VERIFIED -10 pts] 11 Caucus Members Missed Vote' },
+          { type: 'verified', label: '[VERIFIED +6 pts] Appropriations Floor Strategy' }
+        ],
+        lesson: 'Floor leaders are graded on whip discipline: narrow chamber margins mean even a handful of absent members can flip the outcome of a procedural motion.'
+      },
+      {
+        name: 'Mark Kelly',
+        party: 'D',
+        cost: 13,
+        pop: 36,
+        events: [
+          { type: 'verified', label: '[VERIFIED +10 pts] Armed Services Readiness Review' },
+          { type: 'verified', label: '[VERIFIED +8 pts] Veterans Clinic Access Expansion' }
+        ],
+        lesson: 'Targeted healthcare bills that expand rural and veterans clinic capacity directly boost the Healthcare & Doctor Access pillar on the Kitchen Table Scoreboard.'
+      },
+      {
+        name: 'Wes Moore',
+        party: 'D',
+        cost: 13,
+        pop: 29,
+        events: [
+          { type: 'verified', label: '[VERIFIED +12 pts] Port Supply-Chain Throughput' },
+          { type: 'verified', label: '[VERIFIED +5 pts] Workforce Apprenticeship Compact' }
+        ],
+        lesson: 'Reducing port bottlenecks lowers shipping delays for imported and exported goods, easing upward pressure on everyday retail and grocery prices.'
+      },
+      {
+        name: 'John Thune',
+        party: 'R',
+        cost: 12,
+        pop: 31,
+        events: [
+          { type: 'verified', label: '[VERIFIED +10 pts] Executive & Judicial Confirmations' },
+          { type: 'verified', label: '[VERIFIED -4 pts] Cloture Motion Delayed' }
+        ],
+        lesson: 'Senate leadership controls the executive calendar; confirming agency heads shapes regulatory enforcement even when major legislation is gridlocked.'
+      },
+      {
+        name: 'Pete Hegseth',
+        party: 'R',
+        cost: 11,
+        pop: 22,
+        events: [
+          { type: 'verified', label: '[VERIFIED +5 pts] Survived Procedural Motion' },
+          { type: 'unverified', label: '[UNVERIFIED 0 pts] Developing Pentagon Audit Buzz' }
+        ],
+        lesson: 'Independent Scout Bonus (1.5x) applies to officials drafted under 25%, while unconfirmed Pentagon audit rumors remain tagged at 0 pts pending official GAO findings.'
+      },
+      {
+        name: 'Letitia James',
+        party: 'D',
+        cost: 11,
+        pop: 27,
+        events: [
+          { type: 'verified', label: '[VERIFIED +12 pts] Consumer Price-Gouging Enforcement' },
+          { type: 'verified', label: '[VERIFIED +4 pts] Multistate Antitrust Filing' }
+        ],
+        lesson: 'Enforcement actions against anti-competitive pricing in housing and groceries feed directly into the Wallet & Housing Kitchen Table pillars.'
+      },
+      {
+        name: 'Ro Khanna',
+        party: 'D',
+        cost: 9,
+        pop: 18,
+        events: [
+          { type: 'verified', label: '[VERIFIED +10 pts] Congressional Stock-Ban Co-Sponsorship' },
+          { type: 'verified', label: '[VERIFIED +6 pts] AI Data-Center Grid Rate Hearing' }
+        ],
+        lesson: 'As AI data centers expand electricity demand, grid-cost allocation rules determine whether households or tech operators absorb higher utility bills.'
+      },
+      {
+        name: 'Rand Paul',
+        party: 'R',
+        cost: 9,
+        pop: 21,
+        events: [
+          { type: 'verified', label: '[VERIFIED +9 pts] Federal Spending Audit Amendment' },
+          { type: 'verified', label: '[VERIFIED +5 pts] Bipartisan Privacy Safeguard' }
+        ],
+        lesson: 'Spending oversight amendments and cross-aisle privacy bills earn steady points during divided government without relying on party-line sweeps.'
+      }
+    ];
+
+    // Interactive Policy Scenarios for Tab 3 (Kitchen Table Scoreboard)
+    const POLICY_SCENARIOS = [
+      {
+        id: 'tariffs',
+        name: 'Broad Import Tariffs (6-Mo Ripple)',
+        active: true,
+        impacts: { wallet: -8, housing: -2, health: 0, energy: 0 },
+        note: '+10 Day-1 action offset by -8 pt 6-month CPI shelf-price ripple.'
+      },
+      {
+        id: 'rxcap',
+        name: 'Medicare & Insulin Out-of-Pocket Cap',
+        active: true,
+        impacts: { wallet: 2, housing: 0, health: 10, energy: 0 },
+        note: 'Lowers household prescription spend and reduces ER visits.'
+      },
+      {
+        id: 'zoning',
+        name: 'Federal Starter-Home & Zoning Grant',
+        active: true,
+        impacts: { wallet: 0, housing: 4, health: 0, energy: 0 },
+        note: 'Incentivizes local permitting to expand entry-level housing supply.'
+      },
+      {
+        id: 'aigrid',
+        name: 'AI Data-Center Dedicated Power Rule',
+        active: true,
+        impacts: { wallet: 0, housing: 0, health: 0, energy: 5 },
+        note: 'Requires large data centers to fund new grid capacity instead of raising residential electric rates.'
+      }
+    ];
+
+    // =========================================================================
+    // APPLICATION STATE
+    // =========================================================================
+    let roster = {};
+    let selectedSlot = 'pres';
+    let currentNetwork = 'CSPAN';
+    let selectedReelCandidate = null;
+    let toastTimeout = null;
+
+    // =========================================================================
+    // NOTIFICATION HELPER (Non-blocking Toast replacing alert())
+    // =========================================================================
+    function showToast(title, message, type = 'amber') {
+      const banner = document.getElementById('toastBanner');
+      const titleEl = document.getElementById('toastTitle');
+      const msgEl = document.getElementById('toastMessage');
+      const iconEl = document.getElementById('toastIcon');
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+
+      if (type === 'emerald') {
+        banner.className = 'fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-emerald-500/50 bg-slate-900/95 px-4 py-3 shadow-2xl backdrop-blur transition-all duration-300';
+        titleEl.className = 'text-xs font-bold uppercase tracking-wider text-emerald-400';
+        iconEl.className = 'text-emerald-400 font-bold text-base mt-0.5';
+        iconEl.textContent = '✓';
+      } else {
+        banner.className = 'fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-amber-500/50 bg-slate-900/95 px-4 py-3 shadow-2xl backdrop-blur transition-all duration-300';
+        titleEl.className = 'text-xs font-bold uppercase tracking-wider text-amber-300';
+        iconEl.className = 'text-amber-400 font-bold text-base mt-0.5';
+        iconEl.textContent = '!';
+      }
+
+      banner.classList.remove('hidden');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(hideToast, 4200);
+    }
+
+    function hideToast() {
+      document.getElementById('toastBanner').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // CORE RENDERING ENGINE
+    // =========================================================================
+    function renderAll() {
+      const spent = Object.values(roster).reduce((sum, c) => sum + c.cost, 0);
+      const rem = 100 - spent;
+      const capEl = document.getElementById('capDisplay');
+      capEl.textContent = `$${rem}M`;
+      capEl.className = `text-xl font-extrabold ${rem < 10 ? 'text-amber-400' : 'text-emerald-400'}`;
+
+      const activeSlotObj = SLOTS.find(s => s.id === selectedSlot);
+      document.getElementById('activeSlotLabel').textContent = activeSlotObj ? activeSlotObj.title : 'President';
+
+      // 1. Render 8-Slot Grid
+      document.getElementById('slotsGrid').innerHTML = SLOTS.map(s => {
+        const p = roster[s.id];
+        const isSelected = selectedSlot === s.id;
+        const borderClass = isSelected
+          ? 'border-blue-500 bg-slate-900 ring-1 ring-blue-500/40'
+          : 'border-slate-800 bg-slate-950/60 hover:border-slate-600';
+
+        return `
+          <div onclick="selectSlot('${s.id}')" class="p-3.5 rounded-xl border ${borderClass} cursor-pointer transition flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold uppercase tracking-wider text-slate-400">${s.title}</span>
+              <span class="font-bold ${p ? 'text-emerald-400' : 'text-slate-500'}">${p ? '$' + p.cost + 'M' : 'Open'}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="font-bold text-sm truncate ${p ? 'text-white' : 'text-slate-500'}">
+                ${p ? `${p.name} <span class="text-xs font-normal text-slate-400">(${p.party})</span>` : '+ Click slot, then draft'}
+              </div>
+              ${p ? `<button onclick="removeSlot(event, '${s.id}')" title="Remove from slot" class="text-xs px-2 py-0.5 rounded bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white transition shrink-0">Remove</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      // 2. Render Free Agent Scout Pool
+      const draftedNames = new Set(Object.values(roster).map(c => c.name));
+      document.getElementById('poolList').innerHTML = CANDIDATES.map(c => {
+        const isContrarian = c.pop < 25;
+        const alreadyDrafted = draftedNames.has(c.name);
+        const partyColor = c.party === 'D' ? 'text-blue-400' : 'text-red-400';
+
+        return `
+          <div onclick="draftCandidate('${c.name}')" class="p-3 rounded-xl bg-slate-950 border ${alreadyDrafted ? 'border-emerald-500/30 opacity-75' : 'border-slate-800 hover:border-blue-500'} cursor-pointer flex items-center justify-between gap-2 transition">
+            <div class="min-w-0">
+              <div class="font-bold text-sm text-white truncate">
+                ${c.name} <span class="text-xs font-bold ${partyColor}">(${c.party})</span>
+                ${alreadyDrafted ? '<span class="ml-1 text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">On Roster</span>' : ''}
+              </div>
+              <div class="text-xs text-slate-400 mt-0.5">
+                Drafted by ${c.pop}% ${isContrarian ? '• <span class="text-amber-400 font-semibold">Contrarian Scout 1.5x</span>' : ''}
+              </div>
+            </div>
+            <span class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-emerald-400 shrink-0">$${c.cost}M</span>
+          </div>`;
+      }).join('');
+
+      // 3. Render Tab 2 Comparison Table & Consensus Metrics
+      let matches = 0;
+      let contrarians = 0;
+
+      document.getElementById('comparisonTable').innerHTML = SLOTS.map(s => {
+        const p = roster[s.id];
+        const isMatch = p && p.name === s.americasPick;
+        if (isMatch) matches++;
+        if (p && p.pop < 25) contrarians++;
+
+        let statusBadge = '<span class="text-xs text-slate-500">Empty Slot</span>';
+        if (p) {
+          statusBadge = isMatch
+            ? '<span class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">People\'s Match</span>'
+            : '<span class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">Independent Pick</span>';
+        }
+
+        return `
+          <tr>
+            <td class="py-3 pr-3 font-semibold text-slate-300">${s.title}</td>
+            <td class="py-3 px-3 font-bold ${p ? 'text-white' : 'text-slate-500'}">${p ? p.name : '—'}</td>
+            <td class="py-3 px-3 text-blue-300 font-medium">${s.americasPick}</td>
+            <td class="py-3 px-3 text-slate-400">${s.share}</td>
+            <td class="py-3 pl-3">${statusBadge}</td>
+          </tr>`;
+      }).join('');
+
+      const pct = Math.round((matches / SLOTS.length) * 100);
+      document.getElementById('headerMatchDisplay').textContent = `${pct}%`;
+      document.getElementById('bigAlignmentScore').textContent = `${pct}%`;
+      document.getElementById('alignmentBar').style.width = `${pct}%`;
+      document.getElementById('contrarianCount').textContent = `${contrarians} ${contrarians === 1 ? 'Pick' : 'Picks'}`;
+
+      const draftedCount = Object.keys(roster).length;
+      document.getElementById('alignmentVerdict').textContent =
+        draftedCount === 0 ? "Draft officials in Tab 1 to see how your blueprint compares with The People's House." :
+        pct >= 60 ? "Your House aligns closely with The People's House national consensus." :
+        pct > 0 ? "Balanced blueprint — blending popular consensus picks with independent sleeper selections." :
+        "100% independent blueprint — charting your own path apart from the crowd consensus.";
+
+      // 4. Render Tab 3 Kitchen Table Impact Scoreboard
+      renderKitchenTable();
+
+      // 5. Render Tab 4 Weekly Highlight Reel Roster List
+      const draftedEntries = Object.entries(roster);
+      document.getElementById('reelRosterList').innerHTML = draftedEntries.length
+        ? draftedEntries.map(([slotId, c]) => {
+            const slotObj = SLOTS.find(x => x.id === slotId);
+            const isSelected = selectedReelCandidate === c.name;
+            return `
+              <div onclick="loadReel('${c.name}')" class="p-3 rounded-xl border ${isSelected ? 'border-blue-500 bg-slate-900' : 'border-slate-800 bg-slate-950 hover:border-blue-500'} cursor-pointer flex justify-between items-center transition">
+                <div>
+                  <div class="text-[11px] font-bold text-slate-400 uppercase">${slotObj.title}</div>
+                  <div class="font-bold text-sm text-white">${c.name}</div>
+                </div>
+                <span class="text-xs font-bold px-2 py-1 rounded bg-slate-900 text-emerald-400 border border-slate-800">Inspect</span>
+              </div>`;
+          }).join('')
+        : '<p class="text-xs text-slate-500 py-4 text-center border border-dashed border-slate-800 rounded-xl">No officials drafted yet. Build your roster in Tab 1.</p>';
+    }
+
+    // =========================================================================
+    // KITCHEN TABLE SCOREBOARD RENDERER
+    // =========================================================================
+    function renderKitchenTable() {
+      // Render policy toggle buttons
+      document.getElementById('policyToggles').innerHTML = POLICY_SCENARIOS.map(sc => `
+        <button onclick="toggleScenario('${sc.id}')" class="p-3 rounded-xl border text-left transition ${sc.active ? 'bg-blue-950/40 border-blue-500/60 text-white' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'}">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold leading-snug">${sc.name}</span>
+            <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded ${sc.active ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}">${sc.active ? 'ON' : 'OFF'}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1.5 leading-snug">${sc.note}</p>
+        </button>
+      `).join('');
+
+      // Sum impacts across all active scenarios
+      const totals = { wallet: 0, housing: 0, health: 0, energy: 0 };
+      POLICY_SCENARIOS.forEach(sc => {
+        if (sc.active) {
+          totals.wallet += sc.impacts.wallet;
+          totals.housing += sc.impacts.housing;
+          totals.health += sc.impacts.health;
+          totals.energy += sc.impacts.energy;
+        }
+      });
+
+      const netTotal = totals.wallet + totals.housing + totals.health + totals.energy;
+      const netEl = document.getElementById('netKitchenScore');
+      netEl.textContent = `${netTotal >= 0 ? '+' : ''}${netTotal} pts`;
+      netEl.className = `text-2xl font-black ${netTotal >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+
+      const pillars = [
+        {
+          title: '1. Wallet & Daily Spending',
+          score: totals.wallet,
+          desc: 'Tracks grocery checkout prices, everyday household goods, and take-home pay via Bureau of Labor Statistics (BLS) CPI data.',
+          lesson: 'Broad tariffs score +10 pts on Day 1 for executive action, but trigger a -8 pt Ripple adjustment 6 months later if supply-chain costs raise everyday retail prices.'
+        },
+        {
+          title: '2. Housing & Roof Over Your Head',
+          score: totals.housing,
+          desc: 'Tracks median rent, 30-year mortgage rates, and starter-home construction permits.',
+          lesson: 'Sponsors of local zoning and permitting reforms earn positive points when regional rent growth slows below median wage growth.'
+        },
+        {
+          title: '3. Healthcare & Doctor Access',
+          score: totals.health,
+          desc: 'Tracks out-of-pocket hospital and prescription costs, Medicare coverage, and rural clinic access.',
+          lesson: 'Capping out-of-pocket prescription costs or keeping rural hospitals open adds +10 to +15 pts; policies that raise deductibles deduct points.'
+        },
+        {
+          title: '4. Power Grid & AI Energy Bills',
+          score: totals.energy,
+          desc: 'Tracks monthly residential electric bills as AI data centers and domestic manufacturing expand.',
+          lesson: 'Requiring large industrial and AI power users to fund new grid generation protects household utility bills and earns +5 to +8 pts.'
+        }
+      ];
+
+      document.getElementById('pillarsGrid').innerHTML = pillars.map(p => {
+        const badgeStyle = p.score > 0
+          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+          : p.score < 0
+            ? 'bg-red-500/20 text-red-300 border-red-500/30'
+            : 'bg-slate-800 text-slate-300 border-slate-700';
+
+        return `
+          <div class="card p-5 space-y-3 flex flex-col justify-between">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="font-extrabold text-base text-white">${p.title}</h3>
+                <span class="text-xs font-extrabold px-2.5 py-1 rounded-lg border ${badgeStyle}">
+                  ${p.score >= 0 ? '+' : ''}${p.score} pts
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">${p.desc}</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+              <strong class="text-white">How It Grades:</strong> ${p.lesson}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function toggleScenario(id) {
+      const sc = POLICY_SCENARIOS.find(s => s.id === id);
+      if (sc) {
+        sc.active = !sc.active;
+        renderKitchenTable();
+      }
+    }
+
+    // =========================================================================
+    // ROSTER & INTERACTION ACTIONS
+    // =========================================================================
+    function selectSlot(slotId) {
+      selectedSlot = slotId;
+      renderAll();
+    }
+
+    function removeSlot(event, slotId) {
+      event.stopPropagation();
+      delete roster[slotId];
+      renderAll();
+    }
+
+    function clearAllSlots() {
+      roster = {};
+      selectedReelCandidate = null;
+      renderAll();
+      showToast('Roster Cleared', 'All 8 administration slots are open and your $100M cap is restored.', 'emerald');
+    }
+
+    function draftCandidate(name) {
+      const cand = CANDIDATES.find(c => c.name === name);
+      if (!cand) return;
+
+      // Prevent duplicate drafting of the same person into two slots
+      const existingSlot = Object.entries(roster).find(([slotId, c]) => c.name === name && slotId !== selectedSlot);
+      if (existingSlot) {
+        const slotTitle = SLOTS.find(s => s.id === existingSlot[0]).title;
+        showToast('Already on Roster', `${cand.name} is already serving as your ${slotTitle}. Remove them first to reassign.`);
+        return;
+      }
+
+      const spentExcludingCurrent = Object.entries(roster).reduce(
+        (sum, [slotId, c]) => (slotId === selectedSlot ? sum : sum + c.cost),
+        0
+      );
+
+      if (spentExcludingCurrent + cand.cost > 100) {
+        showToast('Over $100M Cap', `Drafting ${cand.name} ($${cand.cost}M) exceeds your remaining Political Capital cap.`);
+        return;
+      }
+
+      roster[selectedSlot] = cand;
+
+      // Advance selectedSlot automatically to the next open slot for smooth drafting
+      const nextOpen = SLOTS.find(s => !roster[s.id]);
+      if (nextOpen) selectedSlot = nextOpen.id;
+
+      renderAll();
+      loadReel(cand.name);
+    }
+
+    function autoFillConsensus() {
+      roster = {};
+      SLOTS.forEach(s => {
+        const match = CANDIDATES.find(c => c.name === s.americasPick);
+        if (match) roster[s.id] = match;
+      });
+      renderAll();
+      loadReel(SLOTS[0].americasPick);
+      showToast("The People's House Loaded", "Drafted all 8 of the nation's #1 most-selected officials ($99M total cap).", 'emerald');
+    }
+
+    function lock2028Ballot() {
+      const count = Object.keys(roster).length;
+      const el = document.getElementById('lockStatus');
+      el.classList.remove('hidden');
+
+      if (count < 8) {
+        el.className = 'text-xs font-semibold text-amber-400';
+        el.textContent = `Fill all 8 slots first (${count}/8 drafted) to timestamp your 2028 Dream House ticket.`;
+        showToast('Incomplete Roster', `You have ${count}/8 slots filled. Complete your lineup to lock your 2028 capsule.`);
+      } else {
+        const timestamp = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        el.className = 'text-xs font-semibold text-emerald-400';
+        el.textContent = `✓ Locked on ${timestamp} for the Nov 2028 & Jan 2029 confirmation window!`;
+        showToast('2028 Capsule Locked', 'Your Dream House roster is timestamped for the 2028 election cycle.', 'emerald');
+      }
+    }
+
+    // =========================================================================
+    // WEEKLY HIGHLIGHT REEL & NETWORK SWITCHER
+    // =========================================================================
+    function loadReel(name) {
+      const cand = CANDIDATES.find(c => c.name === name);
+      if (!cand) return;
+      selectedReelCandidate = cand.name;
+
+      document.getElementById('reelTitle').textContent = `${cand.name} (${cand.party}) — Weekly Receipts & Buzz`;
+
+      const perspectives = {
+        CSPAN: {
+          banner: 'C-SPAN OFFICIAL FLOOR & COMMITTEE LOG',
+          quote: `OFFICIAL RECORD: Verified Congress.gov roll-call votes, committee transcripts, and legislative filings for ${cand.name}.`
+        },
+        CNN: {
+          banner: 'CNN CAPITOL HILL DESK',
+          quote: `CNN ANALYSIS: "Breaking down how ${cand.name}'s committee strategy and coalition math played out on the Hill this week."`
+        },
+        FOX: {
+          banner: 'FOX NEWS WASHINGTON BUREAU',
+          quote: `FOX NEWS REPORT: "Inside ${cand.name}'s high-stakes floor showdown and what it means for taxpayers."`
+        }
+      };
+
+      document.getElementById('networkBanner').textContent = perspectives[currentNetwork].banner;
+      document.getElementById('broadcastQuote').textContent = perspectives[currentNetwork].quote;
+
+      document.getElementById('eventChips').innerHTML = cand.events.map(ev => {
+        const isUnverified = ev.type === 'unverified';
+        const style = isUnverified
+          ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+          : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+        return `<span class="text-xs font-semibold px-3 py-1.5 rounded-lg border ${style}">${ev.label}</span>`;
+      }).join('');
+
+      document.getElementById('civicLessonBox').classList.remove('hidden');
+      document.getElementById('civicLessonText').textContent = cand.lesson;
+
+      renderAll();
+    }
+
+    function setNetwork(net) {
+      currentNetwork = net;
+      ['CSPAN', 'CNN', 'FOX'].forEach(n => {
+        const btn = document.getElementById(`net-${n}`);
+        btn.className = n === net
+          ? 'px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition'
+          : 'px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+      });
+      if (selectedReelCandidate) loadReel(selectedReelCandidate);
+    }
+
+    // =========================================================================
+    // TAB NAVIGATION
+    // =========================================================================
+    function switchTab(tab) {
+      ['draft', 'consensus', 'kitchen', 'reel'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tab-${t}`);
+        btn.className = t === tab
+          ? 'tab-active px-4 py-3 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition text-left sm:text-center'
+          : 'px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-600 transition text-left sm:text-center';
+      });
+    }
+
+    // Initialize app on load
+    window.onload = function () {
+      renderAll();
+    };
+  </script>
+</body>
+</html>
